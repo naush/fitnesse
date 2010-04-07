@@ -85,6 +85,14 @@ public class SlimTestSystemTest {
   }
 
   @Test
+  public void portStaysAtFixedSlimPortVariable() throws Exception {
+      WikiPage pageWithFixedSlimPortDefined = crawler.addPage(root, PathParser.parse("PageWithFixedSlimPortDefined"), "!define SLIM_PORT_FIXED {true}\n!define SLIM_PORT {9000}\n");
+      SlimTestSystem sys = new HtmlSlimTestSystem(pageWithFixedSlimPortDefined, dummyListener);
+      for (int i = 1; i < 15; i++)
+        assertEquals(9000, sys.getNextSlimSocket());
+  }
+
+  @Test
   public void badSlimPortVariableDefaults() throws Exception {
     WikiPage pageWithBadSlimPortDefined = crawler.addPage(root, PathParser.parse("PageWithBadSlimPortDefined"), "!define SLIM_PORT {BOB}\n");
     SlimTestSystem sys = new HtmlSlimTestSystem(pageWithBadSlimPortDefined, dummyListener);

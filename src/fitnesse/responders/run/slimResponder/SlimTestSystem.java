@@ -116,6 +116,9 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
 
   public int getNextSlimSocket() {
     int base = getSlimPortBase();
+    if (isSlimPortFixed()) {
+      return base;
+    }
     synchronized (slimSocketOffset) {
       int offset = slimSocketOffset.get();
       offset = (offset+1)%10;
@@ -124,10 +127,23 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
     }
   }
 
+  private boolean isSlimPortFixed() {
+    try {
+      String slimFixedPort = page.getData().getVariable("SLIM_PORT_FIXED");
+
+      if (slimFixedPort != null) {
+        return Boolean.parseBoolean(slimFixedPort);
+      }
+    } catch (Exception e) {
+    }
+    return false;
+  }
+
   private int getSlimPortBase() {
     int base = 8085;
     try {
       String slimPort = page.getData().getVariable("SLIM_PORT");
+
       if (slimPort != null) {
         int slimPortInt = Integer.parseInt(slimPort);
         base = slimPortInt;
