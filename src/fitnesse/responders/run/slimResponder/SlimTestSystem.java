@@ -55,10 +55,12 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
   private Map<String, ScenarioTable> scenarios = new HashMap<String, ScenarioTable>();
   protected List<SlimTable.Expectation> expectations = new ArrayList<SlimTable.Expectation>();
   private SlimTableFactory slimTableFactory = new SlimTableFactory();
-  
-  public SlimTestSystem(WikiPage page, TestSystemListener listener) {
+  private boolean isRemote;
+
+    public SlimTestSystem(WikiPage page, TestSystemListener listener) {
     super(page, listener);
     testSummary = new TestSummary(0, 0, 0, 0);
+    isRemote = remoteSlimEnabled();
   }
 
   public String getSymbol(String symbolName) {
@@ -104,7 +106,9 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
     slimSocket = getNextSlimSocket();
     String slimArguments = String.format("%s %d", slimFlags, slimSocket);
     String slimCommandPrefix = buildCommand(descriptor, classPath);
-    slimCommand = String.format("%s %s", slimCommandPrefix, slimArguments);
+    slimCommand = isRemote ?
+      String.format("%s %s %s %s", slimCommandPrefix, descriptor.pathSeparator, classPath, descriptor.testRunner) :
+      String.format("%s %s", slimCommandPrefix, slimArguments);
     if (fastTest) {
       slimRunner = new MockCommandRunner();
       createSlimService(slimArguments);
@@ -116,7 +120,7 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
 
   public int getNextSlimSocket() {
     int base = getSlimPortBase();
-    if (isSlimPortFixed()) {
+    if (isRemote) {
       return base;
     }
     synchronized (slimSocketOffset) {
@@ -127,12 +131,11 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
     }
   }
 
-  private boolean isSlimPortFixed() {
+  private boolean remoteSlimEnabled() {
     try {
-      String slimFixedPort = page.getData().getVariable("SLIM_PORT_FIXED");
-
-      if (slimFixedPort != null) {
-        return Boolean.parseBoolean(slimFixedPort);
+      String enabled = page.getData().getVariable("ENABLE_REMOTE_SLIM");
+      if (enabled != null) {
+        return Boolean.parseBoolean(enabled);
       }
     } catch (Exception e) {
     }
@@ -154,8 +157,9 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
   }
 
   public void start() throws Exception {
-    slimRunner.asynchronousStart();
-
+    if (!isRemote) {
+      slimRunner.asynchronousStart();
+    }
     slimClient = new SlimClient(determineSlimHost(), slimSocket);
     try {
       waitForConnection();
@@ -174,9 +178,9 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
     return slimCommand;
   }
 
-  public void bye() throws Exception {
+  public void bye() throws Exception {                                 
     slimClient.sendBye();
-    if (!fastTest)
+    if (!fastTest && !isRemote)
       slimRunner.join();
   }
 
@@ -205,6 +209,9 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
   private boolean isConnected() throws Exception {
     try {
       slimClient.connect();
+      if (isRemote) {
+          slimClient.sendCommandLine(slimCommand);
+      }
       return true;
     } catch (Exception e) {
       return false;

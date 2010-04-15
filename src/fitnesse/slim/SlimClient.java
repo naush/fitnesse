@@ -86,6 +86,10 @@ public class SlimClient {
     writer.flush();
   }
 
+  public void sendCommandLine(String command) throws IOException {
+    writeString(command);
+  }
+
   public void sendBye() throws IOException {
     writeString("bye");
   }
