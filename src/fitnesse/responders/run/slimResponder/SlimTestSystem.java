@@ -3,6 +3,7 @@
 package fitnesse.responders.run.slimResponder;
 
 import fitnesse.components.CommandRunner;
+import fitnesse.components.RemoteCommandRunner;
 import fitnesse.responders.run.ExecutionLog;
 import fitnesse.responders.run.TestSummary;
 import fitnesse.responders.run.TestSystem;
@@ -106,12 +107,14 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
     slimSocket = getNextSlimSocket();
     String slimArguments = String.format("%s %d", slimFlags, slimSocket);
     String slimCommandPrefix = buildCommand(descriptor, classPath);
-    slimCommand = isRemote ?
-      String.format("%s %s %s %s", slimCommandPrefix, descriptor.pathSeparator, classPath, descriptor.testRunner) :
-      String.format("%s %s", slimCommandPrefix, slimArguments);
+    slimCommand = String.format("%s %s", slimCommandPrefix, slimArguments);
     if (fastTest) {
       slimRunner = new MockCommandRunner();
       createSlimService(slimArguments);
+    } else if (isRemote) {
+      launchSlimClient();
+      slimCommand = String.format("%s %s %s %s", slimCommandPrefix, descriptor.pathSeparator, classPath, descriptor.testRunner);
+      slimRunner = new RemoteCommandRunner(slimCommand, slimClient);
     } else {
       slimRunner = new CommandRunner(slimCommand, "", createClasspathEnvironment(classPath));
     }
@@ -157,9 +160,13 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
   }
 
   public void start() throws Exception {
+    slimRunner.asynchronousStart();
     if (!isRemote) {
-      slimRunner.asynchronousStart();
+      launchSlimClient();
     }
+  }
+
+  private void launchSlimClient() throws Exception {
     slimClient = new SlimClient(determineSlimHost(), slimSocket);
     try {
       waitForConnection();
@@ -209,9 +216,9 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
   private boolean isConnected() throws Exception {
     try {
       slimClient.connect();
-      if (isRemote) {
-          slimClient.sendCommandLine(slimCommand);
-      }
+//      if (isRemote) {
+//          slimClient.sendCommandLine(slimCommand);
+//      }
       return true;
     } catch (Exception e) {
       return false;
