@@ -187,7 +187,7 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
 
   public void bye() throws Exception {                                 
     slimClient.sendBye();
-    if (!fastTest && !isRemote)
+    if (!fastTest)
       slimRunner.join();
   }
 
@@ -216,9 +216,6 @@ public abstract class SlimTestSystem extends TestSystem implements SlimTestConte
   private boolean isConnected() throws Exception {
     try {
       slimClient.connect();
-//      if (isRemote) {
-//          slimClient.sendCommandLine(slimCommand);
-//      }
       return true;
     } catch (Exception e) {
       return false;

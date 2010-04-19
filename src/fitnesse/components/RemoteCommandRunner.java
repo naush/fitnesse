@@ -7,6 +7,8 @@ import fitnesse.slim.SlimClient;
 public class RemoteCommandRunner extends CommandRunner {
   private String command;
   private SlimClient client;
+  private long startTime;
+  private long endTime;  
 
   public RemoteCommandRunner(String command, SlimClient client) {
     super(command, "");
@@ -18,6 +20,7 @@ public class RemoteCommandRunner extends CommandRunner {
   }
 
   public void join() throws Exception {
+    endTime = System.currentTimeMillis();
   }
 
   public void kill() throws Exception {
@@ -25,6 +28,10 @@ public class RemoteCommandRunner extends CommandRunner {
 
   public void asynchronousStart() throws Exception {
     client.sendCommandLine(command);
+    startTime = System.currentTimeMillis();
   }
 
+  public long getExecutionTime() {
+   return endTime - startTime;
+  }
 }
