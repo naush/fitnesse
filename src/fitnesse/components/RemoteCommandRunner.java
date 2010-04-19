@@ -2,23 +2,11 @@
 // Released under the terms of the CPL Common Public License version 1.0.
 package fitnesse.components;
 
-import fitnesse.components.CommandRunner;
 import fitnesse.slim.SlimClient;
-
-import java.util.Map;
 
 public class RemoteCommandRunner extends CommandRunner {
   private String command;
   private SlimClient client;
-
-  public RemoteCommandRunner() {
-    super("", "");
-  }
-
-  public RemoteCommandRunner(String command, int exitCode) {
-    super(command, "");
-    this.exitCode = exitCode;
-  }
 
   public RemoteCommandRunner(String command, SlimClient client) {
     super(command, "");
@@ -39,19 +27,4 @@ public class RemoteCommandRunner extends CommandRunner {
     client.sendCommandLine(command);
   }
 
-  public void setOutput(String output) {
-    outputBuffer = new StringBuffer(output);
-  }
-
-  public void setError(String error) {
-    errorBuffer = new StringBuffer(error);
-  }
-
-  public void addException(Exception e) {
-    exceptions.add(e);
-  }
-
-  public void setExitCode(int i) {
-    exitCode = i;
-  }
 }
